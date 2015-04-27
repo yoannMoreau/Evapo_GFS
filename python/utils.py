@@ -274,31 +274,6 @@ def reprojRaster(pathToImg,output,shape,pathToShape):
     subprocess.call(["gdalwarp","-q","-s_srs","EPSG:4326","-t_srs",srs.ExportToWkt(),pathToImg,output,'-ts',str(Xres),str(Yres),'-overwrite','-dstnodata',"0"])
     return output
 
-def writeTiffFromDicoArray(DicoArray,outputImg,shape,geoparam,proj=None,format=gdal.GDT_Float32):
-    
-    gdalFormat = 'GTiff'
-    driver = gdal.GetDriverByName(gdalFormat)
-
-    dst_ds = driver.Create(outputImg, shape[1], shape[0], len(DicoArray), format)
-    
-    j=1
-    for i in DicoArray.values():
-        dst_ds.GetRasterBand(j).WriteArray(i, 0)
-        band = dst_ds.GetRasterBand(j)
-        band.SetNoDataValue(0)
-        j+=1
-    
-    originX =  geoparam[0]
-    originY =  geoparam[1]
-    pixelWidth = geoparam[2]
-    pixelHeight  = geoparam[3]
-
-    dst_ds.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
-    if proj==None:
-        spatialRef = osr.SpatialReference()
-        spatialRef.ImportFromEPSG(4326) 
-        dst_ds.SetProjection(spatialRef.ExportToWkt())
-
 def convertGribToDicoArray(listeFile,listParam,listLevel,liststep,grid,startDate,endDate):
     """ Convert GRIB to Tif"""
     
@@ -614,13 +589,31 @@ def getCentroidLatFromArray(shape,geotransform,grid):
     
     return dicoLatLong
 
-<<<<<<< HEAD
 def WriteTxtFileForEachPixel(outputFolder,et0_0,DateList,DoyList,RayShort,Tmean,Tmax,Tmin,Hmean,Hmax,Hmin,vent,precipitation,pressure,Geo,latlon,projShape):
-    """ Write a Txtfile """
     
-    for i in range(0,et0_0[0].shape[0]): #row
-        for j in range(0,et0_0[0].shape[1]): #col
-=======
+    for i in range(0,et0_0[0].shape[0]):
+        for j in range(0,et0_0[0].shape[1]):
+            lat=latlon[0][i][j]
+            lon=latlon[1][i][j]
+            p1 = pp.Proj(projShape)
+            latP,lonP = p1(lat,lon)
+
+            numero = str(round(lat,2)).replace('.','')+str(round(lon,2)).replace('.','')
+            
+            pathTodateFolder=outputFolder+'/POINT_'+numero+'.txt'
+            f = open(pathTodateFolder,'w+')
+            f.write('numero;altitude;lat/lon(WGS84);lat/lon(initial)\n')
+            f.write(str(numero)+'\t ; '+str(Geo[0][i][j])+'\t ; '+str(lat)+'/'+str(lon)+';'+str(latP)+'/'+str(lonP)+'\n')
+            f.write('ANNEE\tMOIS\tJOUR\tDOY\tRGSHORT\tTAMEAN\tTAMAX\tTAMIN\tRHMEAN\tRHMAX\tRHMIN\tVUMEAN\tPRECIP\tPRESSURE\tET0FAO56\n')
+            f.write('[YYYY]\t[MM]\t[DD]\t[1-365]\t[MJ.m-2.jour-1]\t[MJ.m-2.jour-1]\t[MJ.m-2.jour-1]\t[Kelvin]\t[%]\t[%]\t[%]\t[m.s-1]\t[m.d-1]\t[kPa]\t[mm.d-1]\n')
+            for d in range(0,len(DateList)):
+                year=DateList[d].year
+                month=DateList[d].month
+                day=DateList[d].day
+                f.write(str(year)+'\t'+str(month)+'\t'+str(day)+'\t'+ str(DoyList[d])+'\t'+str(RayShort[d][i][j])+'\t'+str(Tmean[d][i][j])+'\t'+str(Tmax[d][i][j])+'\t'+str(Tmin[d][i][j])+'\t'+str(Hmean[d][i][j])+'\t'+str(Hmax[d][i][j])+'\t'+str(Hmin[d][i][j])+'\t'+ str(vent[d][i][j])+'\t'+str(precipitation[d][i][j])+'\t'+str(pressure[d][i][j])+'\t'+str(et0_0[d][i][j])+'\n')
+            f.close()
+    return pathTodateFolder
+
 def writeTiffFromDicoArray(DicoArray,outputImg,shape,geoparam,proj=None,format=gdal.GDT_Float32):
     
     gdalFormat = 'GTiff'
@@ -640,47 +633,11 @@ def writeTiffFromDicoArray(DicoArray,outputImg,shape,geoparam,proj=None,format=g
     pixelWidth = geoparam[2]
     pixelHeight  = geoparam[3]
 
-    
     dst_ds.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
-
-def WriteTxtFileForEachPixel(outputFolder,et0_0,et0_1,et0_2,DateList,DoyList,Ray,RayShort,RayLong,Tmean,Tmax,Tmin,Hmean,Hmax,Hmin,vent,precipitation,pressure,Geo,latlon):
-    """ Write a Txtfile """
-    
-    
-    for i in range(0,et0_0[0].shape[0]):
-        for j in range(0,et0_0[0].shape[1]):
->>>>>>> 60ca0156007a438a81c6e95150f141bf4f4d38e9
-            lat=latlon[0][i][j]
-            lon=latlon[1][i][j]
-            p1 = pp.Proj(projShape)
-            latP,lonP = p1(lat,lon)
-
-            numero = str(round(lat,2)).replace('.','')+str(round(lon,2)).replace('.','')
-            
-            pathTodateFolder=outputFolder+'/POINT_'+numero+'.txt'
-            f = open(pathTodateFolder,'w+')
-<<<<<<< HEAD
-            f.write('numero;altitude;lat/lon(WGS84);lat/lon(initial)\n')
-            f.write(str(numero)+'\t ; '+str(Geo[0][i][j])+'\t ; '+str(lat)+'/'+str(lon)+';'+str(latP)+'/'+str(lonP)+'\n')
-            f.write('ANNEE\tMOIS\tJOUR\tDOY\tRGSHORT\tTAMEAN\tTAMAX\tTAMIN\tRHMEAN\tRHMAX\tRHMIN\tVUMEAN\tPRECIP\tPRESSURE\tET0FAO56\n')
-            f.write('[YYYY]\t[MM]\t[DD]\t[1-365]\t[MJ.m-2.jour-1]\t[Kelvin]\t[Kelvin]\t[Kelvin]\t[%]\t[%]\t[%]\t[m.s-1]\t[kPa]\t[mm.d-1]\t[mm.d-1]\n')
-=======
-            f.write('numero;altitude;lat/lon(WGS84)\n')
-            f.write(str(numero)+'\t ; '+str(Geo[0][i][j])+'\t ; '+str(lat)+'/'+str(lon)+'\n')
-            f.write('ANNEE\tMOIS\tJOUR\tDOY\tRGSURF\tRGLONG\tRGSHORT\tTAMEAN\tTAMAX\tTAMIN\tRHMEAN\tRHMAX\tRHMIN\tVUMEAN\tPRECIP\tPRESSURE\tET0FAO56\tET0SolarEra\tEvapEraInterim\n')
-            f.write('[YYYY]\t[MM]\t[DD]\t[1-365]\t[MJ.m-2.jour-1]\t[MJ.m-2.jour-1]\t[MJ.m-2.jour-1]\t[Kelvin]\t[Kelvin]\t[Kelvin]\t[%]\t[%]\t[%]\t[m.s-1]\t[kPa]\t[mm.d-1]\t[mm.d-1]\t[mm.d-1]\t[mm.d-1]\n')
->>>>>>> 60ca0156007a438a81c6e95150f141bf4f4d38e9
-            for d in range(0,len(DateList)):
-                year=DateList[d].year
-                month=DateList[d].month
-                day=DateList[d].day
-<<<<<<< HEAD
-                f.write(str(year)+'\t'+str(month)+'\t'+str(day)+'\t'+ str(DoyList[d])+'\t'+str(RayShort[d][i][j])+'\t'+str(Tmean[d][i][j])+'\t'+str(Tmax[d][i][j])+'\t'+str(Tmin[d][i][j])+'\t'+str(Hmean[d][i][j])+'\t'+str(Hmax[d][i][j])+'\t'+str(Hmin[d][i][j])+'\t'+ str(vent[d][i][j])+'\t'+str(precipitation[d][i][j])+'\t'+str(pressure[d][i][j])+'\t'+str(et0_0[d][i][j])+'\n')
-=======
-                f.write(str(year)+'\t'+str(month)+'\t'+str(day)+'\t'+ str(DoyList[d])+'\t'+str(Ray[d][i][j])+'\t'+str(RayShort[d][i][j])+'\t'+str(RayLong[d][i][j])+'\t'+str(Tmean[d][i][j])+'\t'+str(Tmax[d][i][j])+'\t'+str(Tmin[d][i][j])+'\t'+str(Hmean[d][i][j])+'\t'+str(Hmax[d][i][j])+'\t'+str(Hmin[d][i][j])+'\t'+ str(vent[d][i][j])+'\t'+str(precipitation[d][i][j])+'\t'+str(pressure[d][i][j])+'\t'+str(et0_0[d][i][j])+'\t'+str(et0_1[d][i][j])+'\t'+str(et0_2[d][i][j])+'\n')
->>>>>>> 60ca0156007a438a81c6e95150f141bf4f4d38e9
-            f.close()
-    return pathTodateFolder
+    if proj==None:
+        spatialRef = osr.SpatialReference()
+        spatialRef.ImportFromEPSG(4326) 
+        dst_ds.SetProjection(spatialRef.ExportToWkt())
     
 def WritePointList(outputFolder,latlon,projShape):
     
